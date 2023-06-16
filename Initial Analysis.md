@@ -75,6 +75,18 @@ mean_freqs
 ```
 
 ```python
+#Year-Round Frequency
+#Sampling Frequency
+counted=agg_data.drop_duplicates(["ActivityStartDate", "MonitoringLocationIdentifier"]).groupby(["year", "MonitoringLocationIdentifier", "OrganizationFormalName"])["ResultMeasureValue"].count()
+freqs=counted.unstack(0)
+freqs=freqs.loc[year_round]
+freqs.reset_index(inplace=True)
+mean_freqs=freqs.groupby("OrganizationFormalName").mean()
+mean_freqs.fillna(0, inplace=True)
+mean_freqs
+```
+
+```python
 #Selecting organizations with LIS presence
 orgs=["31ISC2RS_WQX", "CT_DEP01_WQX", "USGS-CT", "USGS-NY"]
 trend_data=agg_data.loc[agg_data["OrganizationIdentifier"].isin(orgs)].copy(deep=True)
@@ -98,18 +110,6 @@ year_round = ["A4", "B3", "C1", "C2", "D3", "E1", "09", "15", "F2", "F3", "H2", 
 year_round = ["CT_DEP01_WQX-" + x for x in year_round]
 print(len(year_round))
 year_round
-```
-
-```python
-#Year-Round Frequency
-#Sampling Frequency
-counted=agg_data.drop_duplicates(["ActivityStartDate", "MonitoringLocationIdentifier"]).groupby(["year", "MonitoringLocationIdentifier", "OrganizationFormalName"])["ResultMeasureValue"].count()
-freqs=counted.unstack(0)
-freqs=freqs.loc[year_round]
-freqs.reset_index(inplace=True)
-mean_freqs=freqs.groupby("OrganizationFormalName").mean()
-mean_freqs.fillna(0, inplace=True)
-mean_freqs
 ```
 
 ```python
@@ -385,7 +385,6 @@ for cruise in list(still_iffy):
 ```python
 #Converting depths to numeric
 filtered["ActivityDepthHeightMeasure/MeasureValue"]=pd.to_numeric(filtered["ActivityDepthHeightMeasure/MeasureValue"], errors="coerce")
-filtered.dropna(subset="ActivityDepthHeightMeasure/MeasureValue", axis=0, inplace=True)
 print(len(filtered.dropna(subset="ActivityDepthHeightMeasure/MeasureValue", axis=0)))
 print(len(filtered.dropna(subset="ResultMeasureValue", axis=0)))
 print(len(filtered.dropna(subset="MonitoringLocationIdentifier", axis=0)))
@@ -516,7 +515,7 @@ for depth in depths:
         working=df.sort_values(["Date", "ActivityDepthHeightMeasure/MeasureValue"])
 
         #Setting index as needed for function
-        working.set_index(["MonitoringLocationIdentifier", "Date", "year"], inplace=True, drop=True)
+        working.set_index(["MonitoringLocationIdentifier", "Date", "Year"], inplace=True, drop=True)
 
         #Despiking
         working["ResultMeasureValue"]=despike(working["ResultMeasureValue"], thresh, window)
@@ -632,8 +631,7 @@ for cruise in list(low):
 ```
 
 ```python
-#Outputting despiked_agg to be used later
-despiked_agg.to_csv("../Data Visualization and Analytics Challenge/Data/processed_ph_1.24.csv")
+
 ```
 
 ```python
@@ -799,23 +797,34 @@ plt.show()
 ## By Depth section and basin
 
 ```python
+#Setting size of figures
+plt.rcParams["figure.figsize"]=(21, 5)
+```
+
+```python
 #Renaming for Convenience
 despiked_agg.rename(columns={"ActivityDepthHeightMeasure/MeasureValue": "Depth"}, inplace=True)
 ```
 
 ```python
 #Graphing param
-drange=3
+drange=10
 ```
 
 ```python
 for basin in np.arange(1, 6):
     working=despiked_agg.loc[(despiked_agg["area"]==basin) & (despiked_agg["Depth"]>=drange) & (despiked_agg["Depth"]<(drange+1))]
     fig, ax = plt.subplots()
-    ax.set_title("Basin " + str(basin) + " CTDEEP Stations- Year Round at depth " +"[" + str(drange) + ", " +str(drange + 1) + ") m")
+    ax.set_title("Basin " + str(basin) + " Yr Round CTDEEP Stations at " + str(drange) + " to " +str(drange + 1) + " m", fontsize="xx-large")
     for st in year_round:
         org_data=working.set_index("ActivityStartDate")
-        org_data.loc[org_data["MonitoringLocationIdentifier"]==st, "ResultMeasureValue"].plot(ax=ax)
+        org_data.loc[org_data["MonitoringLocationIdentifier"]==st, "ResultMeasureValue"].plot(ax=ax, label = st_names[st])
+    #plt.legend(loc="upper right", fontsize="xx-large", bbox_to_anchor=(1.1, 1))
+    ax=plt.gca()
+    ax.set_xlabel("Date", fontsize="xx-large")
+    ax.set_ylabel("pH", fontsize="xx-large")
+    plt.savefig("../OneDrive - Environmental Protection Agency (EPA)/Downloads/WQMWG Presentation/CTDEEP_basin_" + str(basin) + "_depth_" + str(drange) + ".png", bbox_inches='tight')
+    plt.show()
     
 ```
 
@@ -844,29 +853,11 @@ for basin in np.arange(1, 6):
 # Trends by the Season
 
 ```python
-despiked_agg
-```
-
-```python
 seasons = dict(zip(np.arange(1,13), ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]))
-```
-
-```python
-#Simple Approach
-seasonal_ph=despiked_agg.loc[despiked_agg["OrganizationIdentifier"]=="CT_DEP01_WQX"].copy(deep=True)
-seasonal_ph["Month"]=seasonal_ph["Date"].dt.month
-grouped=seasonal_ph.groupby(["area", "Month"])["ResultMeasureValue"].mean().unstack(level=[1])
-grouped.index.name="Basin"
-grouped.index=grouped.index.astype(int)
-grouped.columns=seasons.values()
-grouped
-```
-
-```python
 print(seasons)
 for season in np.arange(1,13):
-    for basin in np.arange(1, 6):
-        month_data=despiked_agg.loc[(despiked_agg["OrganizationIdentifier"]=="CT_DEP01_WQX") & (despiked_agg["ActivityStartDate"].dt.month==season) & (despiked_agg["area"]==basin)].copy(deep=True)
+    for org in orgs:
+        month_data=despiked_agg.loc[(despiked_agg["OrganizationIdentifier"]==org) & (despiked_agg["ActivityStartDate"].dt.month==season)].copy(deep=True)
         print(season)
         counts = month_data.groupby(["year", "MonitoringLocationIdentifier"])["ResultMeasureValue"].count().unstack(0)
         counts.replace(0, np.nan, inplace=True)
@@ -874,7 +865,7 @@ for season in np.arange(1,13):
         counts = counts.sum(axis=1)
         #print(counts)
         usable = counts.loc[counts>10].index
-
+        
         month_data=month_data.groupby(["MonitoringLocationIdentifier", "year"]).mean()
         month_data.reset_index(inplace=True)
         #print(month_data)
@@ -882,11 +873,11 @@ for season in np.arange(1,13):
             fig, ax = plt.subplots()
             ax.set_title(seasons[season] + " " + org)
             for st in usable:
-                plt.plot(month_data.loc[month_data["MonitoringLocationIdentifier"]==st, "year"], month_data.loc[month_data["MonitoringLocationIdentifier"]==st, "ResultMeasureValue"], label=st_names[st])
+                plt.plot(month_data.loc[month_data["MonitoringLocationIdentifier"]==st, "year"], month_data.loc[month_data["MonitoringLocationIdentifier"]==st, "ResultMeasureValue"], label=st.lstrip(org + "-"))
             plt.legend(title="Station", loc='upper right')
             plt.savefig("Charts-09-07/" + org + "/" + seasons[season] + " " + org +".png", bbox_inches='tight')            
             plt.show()
-
+        
 ```
 
 ```python
@@ -1020,15 +1011,6 @@ for basin in np.arange(1, 6):
     
 ```
 
-```python
-#d3
-fig, ax = plt.subplots()
-ax.set_title("CTDEEP Stations- D3 (do)")
-working=do.set_index("Date")
-working.loc[working["MonitoringLocationIdentifier"]=="CT_DEP01_WQX-D3", "Dissolved Oxygen"].plot(ax=ax)
-#print(working.loc[working["salinity"]>10000, "salinity"])
-```
-
 ## Quick Check on Profilers
 
 ```python
@@ -1093,8 +1075,8 @@ do.groupby(["Year", "station name"])["Dissolved Oxygen"].mean().unstack(level=-1
 ## Overall
 
 ```python
-from IPython.core.display import display, HTML
-display(HTML("<style>.container { width:100% ! important; }<style>"))
+#Setting size of figures
+plt.rcParams["figure.figsize"]=(21, 10)
 ```
 
 ```python
@@ -1119,17 +1101,17 @@ monthly_ph.loc[monthly_ph.isna()]
 from statsmodels.tsa.seasonal import STL
 res_ph = STL(monthly_ph).fit()
 res_ph.plot()
+plt.gca()
+ax.set_title("Seasonal Decomposition of pH data", fontsize="xx-large")
+ax.set_xlabel("Date", fontsize="xx-large")
+ax.set_ylabel("pH", fontsize="xx-large")
+#plt.savefig("../OneDrive - Environmental Protection Agency (EPA)/Downloads/WQMWG Presentation/CTDEEP_basin_" + str(basin) + "_depth_" + str(drange) + ".png", bbox_inches='tight')
 plt.show()
 
 ```
 
 ```python
 from datetime import datetime
-```
-
-```python
-#Setting size of figures
-plt.rcParams["figure.figsize"]=(21, 5)
 ```
 
 ```python
@@ -1145,8 +1127,6 @@ ax.set_xticks(late_summer, minor=True)
 ax.set_xticks(new_year, major=True)
 ax.xaxis.grid(True, linewidth=2, which='major')
 ax.xaxis.grid(True, linewidth=2, which='minor', color="r")
-ax.set_ylabel("Standardized Units", fontsize="xx-large")
-plt.savefig("../OneDrive - Environmental Protection Agency (EPA)/Downloads/WQMWG Presentation/CTDEEP_do_ph.png", bbox_inches='tight')
 plt.show()
 ```
 
@@ -1187,20 +1167,36 @@ for depth in depths:
     ax.set_xticks(new_year, major=True)
     ax.xaxis.grid(True, linewidth=2, which='major')
     ax.xaxis.grid(True, linewidth=2, which='minor', color="r")
-    plt.title("Depth of " + str(depth) + " to " + str(depth + 1) + "m", fontsize="xx-large")
+    plt.title("Depth of " + str(depth) + " to " + str(depth + 1) + "m")
     plt.show()
+```
+
+```python
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ## By Basin
 
 ```python
 for basin in np.arange(1, 6):
-    for st in year_round:    
+    for st in year_round:
+        org_data=working.set_index("ActivityStartDate")
+        org_data.loc[org_data["MonitoringLocationIdentifier"]==st, "ResultMeasureValue"].plot(ax=ax)
+    
         #do
         working_do=do.loc[(do["area"]==basin) & (do["MonitoringLocationIdentifier"]==st)]
 
         #ph
         working_ph=despiked_agg.loc[(despiked_agg["area"]==basin) & (despiked_agg["MonitoringLocationIdentifier"]==st)]
+        monthly_ph=working_ph.set_index("Date")["ResultMeasureValue"].resample('M').mean().ffill()
         
         if (len(working_do)>0) & (len(working_ph)>0):
             #Monthly sampling
@@ -1224,7 +1220,7 @@ for basin in np.arange(1, 6):
             ax.set_xticks(new_year, major=True)
             ax.xaxis.grid(True, linewidth=2, which='minor', color="r")
             ax.xaxis.grid(True, linewidth=2, which='major')
-            ax.set_title("Basin " + str(basin) + ": " + st_names[st], fontsize="xx-large")
+            ax.set_title("Basin " + str(basin) + " CTDEEP Stations- Seasonal Trends")
             plt.show()
 ```
 
