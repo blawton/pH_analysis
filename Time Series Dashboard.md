@@ -168,6 +168,38 @@ def tsa(data, cov):
 ```python
 tsa(agg, "Dissolved Oxygen")
 ```
+![download](https://github.com/blawton/pH_analysis/assets/46683509/9e6ac80f-2fe1-4b60-a8a3-bad519e7efbc)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/be3508d9-ec21-4150-9464-b44faceb3db2)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/c560c4af-8f96-465b-a953-1c2de2db03e2)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/42c21631-109f-4582-b578-d0c49295abcd)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/3e1df251-91ea-4155-b21a-61c37cb675e2)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/d5ee9196-7c93-4560-b6c5-f9b468bd7fb4)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/6deda64a-eecb-4dea-9de6-af5b01be44f2)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/679b0e65-cf98-4eb4-9231-14bb731e1213)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/8d46bcfe-38e9-43e4-a9dd-061bc171469f)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/6f676bae-8497-4519-aa88-35ae5079866c)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/8c4a38b1-db4d-4398-b31e-8579e0058bce)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/dfc36abf-c05b-49cf-9895-cd7ea6cf4fff)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/b7438cd4-0bef-4e38-9173-4db7f0a22449)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/5532603d-8771-4846-b483-5a2270a1d99a)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/89fea085-56ad-4912-bbf1-6689f6bd5b60)
+
+![download](https://github.com/blawton/pH_analysis/assets/46683509/cf699dc3-12f9-41a8-8ae5-2e5ba49fed75)
+
 
 ```python
 #Seasonal param
